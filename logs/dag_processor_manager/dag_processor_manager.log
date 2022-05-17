@@ -2469,3 +2469,37 @@ File Path                                        PID  Runtime      # DAGs    # E
 [2022-05-15 23:55:32,412] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-15 23:50:32.412338+00:00
 [2022-05-15 23:55:42,473] {manager.py:1128} INFO - Finding 'running' jobs without a recent heartbeat
 [2022-05-15 23:55:42,475] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-15 23:50:42.475739+00:00
+[2022-05-17 13:31:35,974] {manager.py:604} INFO - Processing files using up to 2 processes at a time 
+[2022-05-17 13:31:35,979] {manager.py:605} INFO - Process each file at most once every 30 seconds
+[2022-05-17 13:31:35,984] {manager.py:606} INFO - Checking for new files in /opt/airflow/dags every 300 seconds
+[2022-05-17 13:31:35,989] {manager.py:754} INFO - Searching for files in /opt/airflow/dags
+[2022-05-17 13:31:36,023] {manager.py:757} INFO - There are 1 files in /opt/airflow/dags
+[2022-05-17 13:31:36,240] {manager.py:1128} INFO - Finding 'running' jobs without a recent heartbeat
+[2022-05-17 13:31:36,251] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-17 13:26:36.248861+00:00
+[2022-05-17 13:31:36,427] {manager.py:861} INFO - 
+================================================================================
+DAG File Processing Stats
+
+File Path                                        PID  Runtime      # DAGs    # Errors  Last Runtime    Last Run
+---------------------------------------------  -----  ---------  --------  ----------  --------------  ----------
+/opt/airflow/dags/etl_from_file_to_mongodb.py     77  0.19s             0           0
+================================================================================
+[2022-05-17 13:31:46,482] {manager.py:1128} INFO - Finding 'running' jobs without a recent heartbeat
+[2022-05-17 13:31:46,487] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-17 13:26:46.487591+00:00
+[2022-05-17 13:31:56,550] {manager.py:1128} INFO - Finding 'running' jobs without a recent heartbeat
+[2022-05-17 13:31:56,554] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-17 13:26:56.554678+00:00
+[2022-05-17 13:32:06,632] {manager.py:1128} INFO - Finding 'running' jobs without a recent heartbeat
+[2022-05-17 13:32:06,638] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-17 13:27:06.638469+00:00
+[2022-05-17 13:32:06,708] {manager.py:861} INFO - 
+================================================================================
+DAG File Processing Stats
+
+File Path                                        PID  Runtime      # DAGs    # Errors  Last Runtime    Last Run
+---------------------------------------------  -----  ---------  --------  ----------  --------------  -------------------
+/opt/airflow/dags/etl_from_file_to_mongodb.py     95  0.01s             0           1  0.24s           2022-05-17T13:31:36
+================================================================================
+[2022-05-17 13:32:16,757] {manager.py:1128} INFO - Finding 'running' jobs without a recent heartbeat
+[2022-05-17 13:32:16,762] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-17 13:27:16.761709+00:00
+[2022-05-17 13:32:26,831] {manager.py:1128} INFO - Finding 'running' jobs without a recent heartbeat
+[2022-05-17 13:32:26,838] {manager.py:1132} INFO - Failing jobs without heartbeat after 2022-05-17 13:27:26.838637+00:00
+[2022-05-17 13:32:30,444] {manager.py:585} INFO - Exiting gracefully upon receiving signal 15
