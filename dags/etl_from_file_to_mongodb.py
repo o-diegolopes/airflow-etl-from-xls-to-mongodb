@@ -4,14 +4,13 @@ from airflow.operators.python import PythonOperator
 
 # others packeges
 from datetime import timedelta, datetime
+from numpy import double
 import pandas as pd
 import xlwings as xw
-import os
+import os, locale, shutil
 
 
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.width', None)
+locale.setlocale(locale.LC_ALL, 'pt_BR')
 
 
 class ExtractDataFromXls:
@@ -94,16 +93,22 @@ class ExtractDataFromXls:
     if not os.path.exists(self.trusted_zone_path):
       os.makedirs(self.trusted_zone_path)
 
-  def extract_oil_derivative_fuels(self, *args, **kwargs):
+  def copy_data_from_storage_to_transient_zone(self, *args, **kwargs):
     """"
-    This function extract oil derivative fuels data from XLS and load to data lake transient zone.
+    This function make a copy of files in storage to transiente zone.
     """
+    shutil.copyfile(f"{self.storage}/{self.xls_file}", f"{self.transient_zone_path}/{self.xls_file}")
 
+  def extract_oil_derivative_fuels_data_to_raw_zone(self, *args, **kwargs):
+    """"
+    This function extract oil derivative fuels data from XLS in transient zone to raw zone.
+    """
+    frames = []
     for key, units in self.federation_units.items():
       for product in self.oil_derivative_fuels:
 
         with xw.App(visible=False) as app:
-          book = xw.Book(f"{self.storage}/{self.xls_file}")
+          book = xw.Book(f"{self.transient_zone_path}/{self.xls_file}")
           book.sheets[0]["C49"].value = units
           book.sheets[0]["C50"].value = product
 
@@ -117,28 +122,36 @@ class ExtractDataFromXls:
               skiprows=self.oil_derivative_fuels_table.get("skiprows"),
               nrows=self.oil_derivative_fuels_table.get("nrows")
           )
-          #df.drop(["index"],  axis=1)
+
+          get_month = lambda x: datetime.strptime(x, '%B').month
+
           df = df.set_index('Dados').stack().reset_index()
           df = df.rename(columns={0: "volume"})
-          df["product"] = product
+          df["product"] = product[:-5]
           df["uf"] = key
-          print(df.head(100))
-          #df.to_parquet(f"{self.transient_zone_path}/{units}-{product}")
+          df["unit"] = product[-3:-1]
+          df["year_month"] = df.apply(
+            lambda row: f"{str(row['level_1'])}-{str(get_month(row['Dados']) if get_month(row['Dados']) >= 10 else '0'+ str(get_month(row['Dados'])))}", axis=1
+          )
+          df["volume"] = df.apply(lambda row: round(float(row['volume']), 3), axis=1)
+          
+          df = df.drop(["Dados", "level_1"],  axis=1).set_index('year_month').reset_index()
 
-  def consolidate_data_and_load_to_raw(*args, **kwargs):
-    pass
-  
-  def transform_data_from_raw_to_trusted(*args, **kwargs):
-    pass
+          frames.append(df)
+          
+    dataframe = pd.concat(frames)
+    dataframe.to_csv(f"{self.transient_zone_path}/{units}-{product}")
 
   def load_data_to_mongodb(*args, **kwargs):
     pass
 
-  def clear_transient_zone(*args, **kwargs):
-    pass
+  def clear_transient_zone(self, *args, **kwargs):
+    shutil.rmtree(f"{self.transient_zone_path}")
 
 etl = ExtractDataFromXls()
 
+#etl.copy_data_from_storage_to_transient_zone()
+etl.clear_transient_zone()
 etl.extract_oil_derivative_fuels()
 
 # dag = DAG(
