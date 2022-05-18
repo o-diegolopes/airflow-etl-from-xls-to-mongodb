@@ -74,7 +74,7 @@ class ExtractDataFromXls:
       "sheet": "Plan1"
     }
     self.diesel_table = {
-      "columns": "B:J",
+      "usecols": "B:J",
       "skiprows": 132,
       "nrows": 12,
       "sheet": "Plan1"
@@ -112,7 +112,7 @@ class ExtractDataFromXls:
           book.sheets[0]["C49"].value = units
           book.sheets[0]["C50"].value = product
 
-          book.save(f"{self.storage}/{self.xls_file}")
+          book.save(f"{self.transient_zone_path}/{self.xls_file}")
           book.close()
 
           df = pd.read_excel(
@@ -134,14 +134,61 @@ class ExtractDataFromXls:
             lambda row: f"{str(row['level_1'])}-{str(get_month(row['Dados']) if get_month(row['Dados']) >= 10 else '0'+ str(get_month(row['Dados'])))}", axis=1
           )
           df["volume"] = df.apply(lambda row: round(float(row['volume']), 3), axis=1)
+          df["create_at"] = datetime.today.strftime('%Y-%m-%d')
           
           df = df.drop(["Dados", "level_1"],  axis=1).set_index('year_month').reset_index()
 
           frames.append(df)
           
     dataframe = pd.concat(frames)
-    dataframe.to_csv(f"{self.transient_zone_path}/{units}-{product}")
+    dataframe.to_csv(f"{self.raw_zone_path}/oil_derivative_fuels.csv")
 
+  def extract_diesel_fuel_data_to_raw_zone(self, *args, **kwargs):
+    """"
+    This function extract diesel fuel data from XLS in transient zone to raw zone.
+    """
+    frames = []
+    for key, units in self.federation_units.items():
+      for product in self.diesel_types:
+
+        with xw.App(visible=False) as app:
+          book = xw.Book(f"{self.transient_zone_path}/{self.xls_file}")
+          book.sheets[0]["C129"].value = units
+          book.sheets[0]["C130"].value = product
+
+          book.save(f"{self.transient_zone_path}/{self.xls_file}")
+          book.close()
+
+          df = pd.read_excel(
+              f"{self.storage}/{self.xls_file}",
+              sheet_name=self.diesel_table.get("sheet"),
+              usecols=self.diesel_table.get("usecols"),
+              skiprows=self.diesel_table.get("skiprows"),
+              nrows=self.diesel_table.get("nrows")
+          )
+
+          get_month = lambda x: datetime.strptime(x, '%B').month
+
+          df = df.set_index('Dados').stack().reset_index()
+          df = df.rename(columns={0: "volume"})
+          df["product"] = product[:-5]
+          df["uf"] = key
+          df["unit"] = product[-3:-1]
+          df["year_month"] = df.apply(
+            lambda row: f"{str(row['level_1'])}-{str(get_month(row['Dados']) if get_month(row['Dados']) >= 10 else '0'+ str(get_month(row['Dados'])))}", axis=1
+          )
+          df["volume"] = df.apply(lambda row: round(float(row['volume']), 3), axis=1)
+          df["create_at"] = datetime.today().strftime('%Y-%m-%d')
+          
+          df = df.drop(["Dados", "level_1"],  axis=1).set_index('year_month').reset_index()
+
+          frames.append(df)
+          
+    dataframe = pd.concat(frames)
+    dataframe.to_csv(f"{self.raw_zone_path}/diesel_fuels.csv")
+  
+  
+  
   def load_data_to_mongodb(*args, **kwargs):
     pass
 
@@ -150,9 +197,10 @@ class ExtractDataFromXls:
 
 etl = ExtractDataFromXls()
 
-#etl.copy_data_from_storage_to_transient_zone()
 etl.clear_transient_zone()
-etl.extract_oil_derivative_fuels()
+etl.check_if_exists_transient_zone()
+etl.copy_data_from_storage_to_transient_zone()
+etl.extract_diesel_fuel_data_to_raw_zone()
 
 # dag = DAG(
 #     default_args = {
